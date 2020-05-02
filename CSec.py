@@ -55,7 +55,6 @@ def register(username, hashed_password, user_type):
 
     config_parser.write(data_file)
     data_file.close()
-    print('Registration Successfull')
 
     return True
 
@@ -71,20 +70,26 @@ def check_username(username, user_type):
         print('Records Found')
         return True
     else:
-        return False
+        if user_type == 'staff':
+            if username.split('@')[-1] in ['doc', 'nurse', 'lab', 'pharmacy', 'reception']:
+                return False
+            else:
+                print('Invalid Username')
+                return True
+        if user_type == 'patient':
+            if username.split('@')[-1] in ['doc', 'nurse', 'lab', 'pharmacy', 'reception']:
+                return True
+            else:
+                print('You can not use this username')
+                return False
 
-    if user_type == 'staff':
-        if username.split('@')[-1] in ['doc', 'nurse', 'lab', 'pharmacy', 'reception']:
-            return False
-        else:
-            print('Invalid Username')
-            return True
-    if user_type == 'staff':
-        if username.split('@')[-1] in ['doc', 'nurse', 'lab', 'pharmacy', 'reception']:
-            return True
-        else:
-            print('You can not use this username')
-            return False
+
+def validate_user(key):
+    given_key = 'given key'
+    if key == given_key:
+        return False
+    else:
+        return True
 
 
 def login(username, password):
@@ -267,10 +272,22 @@ while (func != 0):
                 if check_username(username, user_type):
                     continue
                 else:
+                    print('Key: ', end='')
+                    key = input().strip()
+                    if validate_user(key):
+                        continue
+                    else:
+                        break
                     break
-        register(username, hashed_password, user_type)
+
+        register = register(username, hashed_password, user_type)
+        if register:
+            print('Registration Successfull')
+        else:
+            print('Can not regiter')
+
         print('/***********User Login*********/')
-        user = login(username, password)
+        user, logged = login(username, password)
         print('/***********Patient Details*********/')
 
         patient_details(user)

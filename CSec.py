@@ -66,7 +66,7 @@ def check_username(username, user_type):
         return True
     config_parser.read(config_filename)
     section = 'User' + ' ' + username.split('@')[0]
-    print(section)
+    # print(section)
     if section in config_parser.sections():
         print('Records Found')
         return True
@@ -79,6 +79,12 @@ def check_username(username, user_type):
         else:
             print('Invalid Username')
             return True
+    if user_type == 'staff':
+        if username.split('@')[-1] in ['doc', 'nurse', 'lab', 'pharmacy', 'reception']:
+            return True
+        else:
+            print('You can not use this username')
+            return False
 
 
 def login(username, password):
@@ -88,11 +94,13 @@ def login(username, password):
         hashed_password = config_parser.get(section, 'hashed_password')
         if md5_crypt.verify(password, hashed_password):
             print('Login Successful')
-            return section
+            return section, True
         else:
             print('Inavlid Credentials')
+            return None, False
     else:
         print('No Records Found')
+        return None, False
 
 
 def patient_details(current_user):
@@ -103,7 +111,7 @@ def patient_details(current_user):
     config_parser = ConfigParser()
     config_parser.read(config_filename)
     privilege_level = config_parser.get(current_user, 'privilege_level')
-    print(privilege_level)
+    # print(privilege_level)
     current_username = config_parser.get(current_user, 'username')
     personal_details = ''
     sickness_details = ''
@@ -113,7 +121,7 @@ def patient_details(current_user):
     while True:
         print('Enter the username of the patient: ', end='')
         patient_username = input().strip().split('@')[0]
-        print('patient_username')
+        # print('patient_username')
         if check_username(patient_username, 0):
             user = 'User' + ' ' + patient_username.split('@')[0]
             username = config_parser.get(user, 'username')
@@ -142,7 +150,7 @@ def patient_details(current_user):
             else:
                 print('You do not have permission to do this')
         if process == 'read':
-            print('here')
+            # print('here')
             if username == current_username or privilege_level == '1' or privilege_level == '2' or privilege_level == '3' or privilege_level == '4' or privilege_level == '5':
                 personal_details = config_parser.get(user, 'personal_details')
                 print(personal_details)
@@ -154,13 +162,14 @@ def patient_details(current_user):
             if privilege_level == '5':
                 print('Enter details: ')
                 sickness_details_old = config_parser.get(
-                    user, 'personal_details')
+                    user, 'sickness_details')
                 sickness_details = input().strip()
                 sickness_details = sickness_details_old + ', ' + sickness_details
                 config_parser.set(user, 'sickness_details', sickness_details)
                 print(config_parser.get(user, 'sickness_details'))
                 print('Updated Successfully')
-
+            else:
+                print('You do not have permission to do this')
         elif process == 'read':
             if username == current_username or privilege_level == '1' or privilege_level == '2' or privilege_level == '3' or privilege_level == '4' or privilege_level == '5':
                 sickness_details = config_parser.get(user, 'sickness_details')
@@ -169,10 +178,10 @@ def patient_details(current_user):
                 print('You do not have permission')
     elif section == 'drugs':
         if process == 'write':
-            if privilege_level == 5:
+            if privilege_level == '5':
                 print('Enter details: ')
                 drug_prescription_old = config_parser.get(
-                    user, 'personal_details')
+                    user, 'drug_prescription')
                 drug_prescription = input().strip()
                 drug_prescription = drug_prescription_old + ', ' + drug_prescription
                 config_parser.set(user, 'drug_prescription', drug_prescription)
@@ -190,15 +199,15 @@ def patient_details(current_user):
 
     elif section == 'lab':
         if process == 'write':
-            if privilege_level == 3:
+            if privilege_level == '3':
                 print('Enter details: ')
                 lab_test_prescription_old = config_parser.get(
-                    user, 'personal_details')
+                    user, 'lab_test_prescription')
                 lab_test_prescription = input().strip()
                 lab_test_prescription = lab_test_prescription_old + ', ' + lab_test_prescription
                 config_parser.set(
                     user, 'lab_test_prescription', lab_test_prescription)
-                print(config_parser.get(user, 'lab_test_prescription'))
+                (config_parser.get(user, 'lab_test_prescription'))
                 print('Updated Successfully')
             else:
                 print('you do not have permission')
@@ -221,15 +230,16 @@ def patient_details(current_user):
 while (func != 0):
     print("function (register, login, details or 0) :")
     func = input().strip()
+    logged = False
     if func == "register":
         print('/***********User Registration*********/')
 
-        print('username(): ', end='')
+        print('username: ', end='')
         username = input().strip()
         password = ''
         confirm_password = 'aa'
         user_type = 'none'
-        user = ''
+        user = '0'
         while True:
             if check_username(username, user_type):
                 print('username: ', end='')
@@ -265,25 +275,34 @@ while (func != 0):
 
         patient_details(user)
 
-    if func == "login":
-        print('/***********User Login*********/')
+    elif func == "login":
+        while True:
+            print('/***********User Login*********/')
 
-        print('username: ', end='')
-        username = input().strip()
+            print('username: ', end='')
+            username = input().strip()
 
-        password = getpass.getpass(prompt='password')
+            password = getpass.getpass(prompt='password')
 
-        user = login(username, password)
+            user, logged = login(username, password)
+            if logged:
+                break
+            else:
+                continue
         print('/***********Patient Details*********/')
 
         patient_details(user)
 
-    if func == "details":
+    elif func == "details":
         print('/***********Patient Details*********/')
-        privilege_level = login
+        if (logged == '1'):
+            print('login first')
+        else:
+            patient_details(user)
 
-        patient_details(user)
-
-    if func == 0:
+    elif func == '0':
         print('Bye')
         break
+
+    else:
+        print('Wrong Input')
